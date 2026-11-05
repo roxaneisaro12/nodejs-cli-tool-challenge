@@ -2,18 +2,20 @@ import { randomUUID } from "node:crypto";
 import { readTasks, saveTasks } from "./storage.js";
 
 export function addTask(title) {
-  const tasks = readTasks();
+  if (!title || !title.trim()) {
+    throw new Error("Task title cannot be empty.");
+  }
 
+  const tasks = readTasks();
   const task = {
-    id: randomUUID().slice(0, 8),
-    title,
+    id: randomUUID(),
+    title: title.trim(),
     completed: false,
     createdAt: new Date().toISOString(),
   };
 
   tasks.push(task);
   saveTasks(tasks);
-
   return task;
 }
 

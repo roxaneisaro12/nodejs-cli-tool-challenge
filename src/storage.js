@@ -14,5 +14,6 @@ export function readTasks() {
 }
 
 export function saveTasks(tasks) {
+  fs.mkdirSync(path.dirname(dataFile), { recursive: true });
   fs.writeFileSync(dataFile, JSON.stringify(tasks, null, 2));
 }
