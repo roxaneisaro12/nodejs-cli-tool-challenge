@@ -1,37 +1,93 @@
 import chalk from "chalk";
-import { displayWelcome, displayMenu } from "./ui.js";
+import { parseArgs } from "node:util";
+import {
+  addTask,
+  getTasks,
+  completeTask,
+  deleteTask,
+} from "./tasks.js";
+import { getQuote } from "./api/api.js";
 
-async function startApp() {
-  displayWelcome();
+async function run() {
+  const { positionals } = parseArgs({
+    args: process.argv.slice(2),
+    allowPositionals: true,
+    strict: false,
+  });
 
-  let isRunning = true;
+  const [command, ...argumentsList] = positionals;
 
-  while (isRunning) {
-    const action = await displayMenu();
+  try {
+    switch (command) {
+      case "add": {
+        const title = argumentsList.join(" ");
 
-    switch (action) {
-      case "Add a task":
-        console.log(chalk.yellow("\nAdd task feature coming next!"));
+        if (!title) throw new Error("Please provide a task title.");
+
+        const task = addTask(title);
+        console.log(chalk.green(`Task added: ${task.title}`));
         break;
+      }
 
-      case "View all tasks":
-        console.log(chalk.yellow("\nView tasks feature coming next!"));
-        break;
+      case "list": {
+        const tasks = getTasks();
 
-      case "Complete a task":
-        console.log(chalk.yellow("\nComplete task feature coming next!"));
-        break;
+        if (tasks.length === 0) {
+          console.log(chalk.yellow("No tasks found."));
+          break;
+        }
 
-      case "Delete a task":
-        console.log(chalk.yellow("\nDelete task feature coming next!"));
-        break;
+        console.log(chalk.bold("\nYOUR STUDY TASKS\n"));
 
-      case "Exit":
-        console.log(chalk.green("\nThank you for using StudyFlow!"));
-        isRunning = false;
+        tasks.forEach((task) => {
+          const status = task.completed ? "Completed" : "Pending";
+          console.log(
+            `${task.id} | ${task.title} | ${task.completed ? chalk.green(status) : chalk.yellow(status)}`,
+          );
+        });
         break;
+      }
+
+      case "complete": {
+        const success = completeTask(argumentsList[0]);
+
+        if (!success) throw new Error("Task ID not found.");
+
+        console.log(chalk.green("Task completed successfully."));
+        break;
+      }
+
+      case "delete": {
+        const success = deleteTask(argumentsList[0]);
+
+        if (!success) throw new Error("Task ID not found.");
+
+        console.log(chalk.green("Task deleted successfully."));
+        break;
+      }
+
+      case "quote": {
+        console.log(chalk.yellow("Fetching a motivational quote..."));
+        const result = await getQuote();
+
+        console.log(chalk.italic(`"${result.quote}"`));
+        console.log(chalk.dim(`— ${result.author}`));
+        break;
+      }
+
+      default:
+        console.log(chalk.bold("\nSTUDYFLOW CLI"));
+        console.log("add <title>       Add a task");
+        console.log("list              View tasks");
+        console.log("complete <id>     Complete a task");
+        console.log("delete <id>       Delete a task");
+        console.log("quote             Get a motivational quote");
+        console.log("help              Show commands");
     }
+  } catch (error) {
+    console.error(chalk.red(`Error: ${error.message}`));
+    process.exitCode = 1;
   }
 }
 
-startApp();
+run();
