@@ -1,53 +1,45 @@
 import { randomUUID } from "node:crypto";
-import { loadTasks, saveTasks } from "./storage.js";
+import { readTasks, saveTasks } from "./storage.js";
 
-export async function addTask(title) {
+export function addTask(title) {
   if (!title || !title.trim()) {
     throw new Error("Task title cannot be empty.");
   }
 
-  const tasks = await loadTasks();
-
+  const tasks = readTasks();
   const task = {
     id: randomUUID(),
     title: title.trim(),
     completed: false,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
   };
 
   tasks.push(task);
-  await saveTasks(tasks);
-
+  saveTasks(tasks);
   return task;
 }
 
-export async function getTasks() {
-  return await loadTasks();
+export function getTasks() {
+  return readTasks();
 }
 
-export async function completeTask(id) {
-  const tasks = await loadTasks();
+export function completeTask(id) {
+  const tasks = readTasks();
   const task = tasks.find((item) => item.id === id);
 
-  if (!task) {
-    throw new Error("Task not found.");
-  }
+  if (!task) return false;
 
   task.completed = true;
-  await saveTasks(tasks);
-
-  return task;
+  saveTasks(tasks);
+  return true;
 }
 
-export async function deleteTask(id) {
-  const tasks = await loadTasks();
-  const updatedTasks = tasks.filter((item) => item.id !== id);
+export function deleteTask(id) {
+  const tasks = readTasks();
+  const updatedTasks = tasks.filter((task) => task.id !== id);
 
-  if (updatedTasks.length === tasks.length) {
-    throw new Error("Task not found.");
-  }
+  if (updatedTasks.length === tasks.length) return false;
 
-  await saveTasks(updatedTasks);
-
+  saveTasks(updatedTasks);
   return true;
 }

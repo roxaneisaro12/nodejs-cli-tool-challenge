@@ -1,7 +1,7 @@
 {
   "name": "studyflow-cli",
   "version": "1.0.0",
-  "description": "A student task management command-line application",
+  "description": "A student task management CLI built with Node.js",
   "type": "module",
   "main": "src/index.js",
   "bin": {
@@ -13,8 +13,20 @@
     "format": "prettier --write ."
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
-  "keywords": ["student", "tasks", "cli"],
-  "license": "MIT"
+  "keywords": [
+    "student",
+    "tasks",
+    "cli"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.4.0",
+    "cli-table3": "^0.6.5",
+    "ora": "^10.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  }
 }
