@@ -1,11 +1,15 @@
 import chalk from "chalk";
+import Table from "cli-table3";
+import ora from "ora";
 import { parseArgs } from "node:util";
+
 import {
   addTask,
   getTasks,
   completeTask,
   deleteTask,
 } from "./tasks.js";
+
 import { getQuote } from "./api/api.js";
 
 async function run() {
@@ -15,13 +19,12 @@ async function run() {
     strict: false,
   });
 
-  const [command, ...argumentsList] = positionals;
+  const [command, ...args] = positionals;
 
   try {
     switch (command) {
       case "add": {
-        const title = argumentsList.join(" ");
-
+        const title = args.join(" ");
         if (!title) throw new Error("Please provide a task title.");
 
         const task = addTask(title);
@@ -37,41 +40,56 @@ async function run() {
           break;
         }
 
-        console.log(chalk.bold("\nYOUR STUDY TASKS\n"));
+        const table = new Table({
+          head: ["ID", "Task", "Status"],
+          style: { head: ["cyan"] },
+        });
 
         tasks.forEach((task) => {
-          const status = task.completed ? "Completed" : "Pending";
-          console.log(
-            `${task.id} | ${task.title} | ${task.completed ? chalk.green(status) : chalk.yellow(status)}`,
-          );
+          table.push([
+            task.id,
+            task.title,
+            task.completed
+              ? chalk.green("Completed")
+              : chalk.yellow("Pending"),
+          ]);
         });
+
+        console.log(table.toString());
         break;
       }
 
       case "complete": {
-        const success = completeTask(argumentsList[0]);
-
-        if (!success) throw new Error("Task ID not found.");
+        if (!completeTask(args[0])) {
+          throw new Error("Task ID not found.");
+        }
 
         console.log(chalk.green("Task completed successfully."));
         break;
       }
 
       case "delete": {
-        const success = deleteTask(argumentsList[0]);
-
-        if (!success) throw new Error("Task ID not found.");
+        if (!deleteTask(args[0])) {
+          throw new Error("Task ID not found.");
+        }
 
         console.log(chalk.green("Task deleted successfully."));
         break;
       }
 
       case "quote": {
-        console.log(chalk.yellow("Fetching a motivational quote..."));
-        const result = await getQuote();
+        const spinner = ora("Fetching a motivational quote...").start();
 
-        console.log(chalk.italic(`"${result.quote}"`));
-        console.log(chalk.dim(`— ${result.author}`));
+        try {
+          const result = await getQuote();
+          spinner.succeed("Quote retrieved successfully!");
+          console.log(chalk.italic(`"${result.quote}"`));
+          console.log(chalk.dim(`— ${result.author}`));
+        } catch (error) {
+          spinner.fail("Could not retrieve quote.");
+          throw error;
+        }
+
         break;
       }
 
